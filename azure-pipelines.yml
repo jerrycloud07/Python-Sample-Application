@@ -6,82 +6,53 @@
 trigger:
 - master
 
-variables:
-  # Azure Resource Manager connection created during pipeline creation
-  azureServiceConnectionId: '47a515ca-c467-4270-a2ec-191dd79acd26'
-
-  # Web app name
-  webAppName: 'pythonapp76282'
-
-  # Agent VM image name
-  vmImageName: 'ubuntu-latest'
-
-  # Environment name
-  environmentName: 'pythonapp76282'
-
-  # Project root folder. Point to the folder containing manage.py file.
-  projectRoot: $(System.DefaultWorkingDirectory)
-
-  # Python version: 3.7
-  pythonVersion: '3.7'
+pool:
+  vmImage: 'ubuntu-latest'
 
 stages:
 - stage: Build
-  displayName: Build stage
   jobs:
   - job: BuildJob
-    pool:
-      vmImage: $(vmImageName)
     steps:
     - task: UsePythonVersion@0
       inputs:
-        versionSpec: '$(pythonVersion)'
-      displayName: 'Use Python $(pythonVersion)'
+        versionSpec: '3.9'
+      displayName: 'Use Python 3.9'
 
     - script: |
-        python -m venv antenv
-        source antenv/bin/activate
-        python -m pip install --upgrade pip
-        pip install setup
+        python -m venv venv
+        source venv/bin/activate
         pip install -r requirements.txt
-      workingDirectory: $(projectRoot)
-      displayName: "Install requirements"
+      displayName: 'Install dependencies'
 
     - task: ArchiveFiles@2
-      displayName: 'Archive files'
       inputs:
-        rootFolderOrFile: '$(projectRoot)'
+        rootFolderOrFile: '.'
         includeRootFolder: false
-        archiveType: zip
-        archiveFile: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
+        archiveType: 'zip'
+        archiveFile: '$(Build.ArtifactStagingDirectory)/output.zip'
         replaceExistingArchive: true
+      displayName: 'Archive files'
 
-    - upload: $(Build.ArtifactStagingDirectory)/$(Build.BuildId).zip
-      displayName: 'Upload package'
-      artifact: drop
+- stage: Test
+  dependsOn: Build
+  jobs:
+  - job: TestJob
+    steps:
+    - script: |
+        source venv/bin/activate
+        pytest
+      displayName: 'Run tests'
 
 - stage: Deploy
-  displayName: 'Deploy Web App'
-  dependsOn: Build
-  condition: succeeded()
+  dependsOn: Test
   jobs:
-  - deployment: DeploymentJob
-    pool:
-      vmImage: $(vmImageName)
-    environment: $(environmentName)
-    strategy:
-      runOnce:
-        deploy:
-          steps:
-
-          - task: UsePythonVersion@0
-            inputs:
-              versionSpec: '$(pythonVersion)'
-            displayName: 'Use Python version'
-
-          - task: AzureWebApp@1
-            displayName: 'Deploy Azure Web App : pythonapp76282'
-            inputs:
-              azureSubscription: $(azureServiceConnectionId)
-              appName: $(webAppName)
-              package: $(Pipeline.Workspace)/drop/$(Build.BuildId).zip
+  - job: DeployJob
+    steps:
+    - task: AzureWebApp@1
+      inputs:
+        azureSubscription: 'Free Trial(4e8b4bd0-7eee-426c-afeb-50d1ceb34677)'
+        appType: 'webAppLinux'
+        appName: 'pythonapp76282'
+        package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+      displayName: 'Deploy to Azure Web App'
