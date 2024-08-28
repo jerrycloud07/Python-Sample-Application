@@ -44,15 +44,15 @@ stages:
         pytest
       displayName: 'Run tests'
 
-- stage: Deploy
-  dependsOn: Test
-  jobs:
-  - job: DeployJob
-    steps:
-    - task: AzureWebApp@1
-      inputs:
-        azureSubscription: 'Free Trial(4e8b4bd0-7eee-426c-afeb-50d1ceb34677)'
-        appType: 'webAppLinux'
-        appName: 'pythonapp76282'
-        package: '$(System.DefaultWorkingDirectory)/**/*.zip'
-      displayName: 'Deploy to Azure Web App'
+# - stage: Deploy
+#   dependsOn: Test
+#   jobs:
+#   - job: DeployJob
+#     steps:
+#     - task: AzureWebApp@1
+#       inputs:
+#         azureSubscription: 'Free Trial(4e8b4bd0-7eee-426c-afeb-50d1ceb34677)'
+#         appType: 'webAppLinux'
+#         appName: 'pythonapp76282'
+#         package: '$(System.DefaultWorkingDirectory)/**/*.zip'
+#       displayName: 'Deploy to Azure Web App'
