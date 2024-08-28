@@ -4,47 +4,33 @@
 # https://docs.microsoft.com/azure/devops/pipelines/languages/python
 
 trigger:
-- master
-
+- master  # Adjust this to your default branch name, e.g., 'master' or 'main'
+ 
 pool:
-  vmImage: 'ubuntu-latest'
-
-stages:
-- stage: Build
-  jobs:
-  - job: BuildJob
-    steps:
-    - task: UsePythonVersion@0
-      inputs:
-        versionSpec: '3.9'
-      displayName: 'Use Python 3.9'
-
-    - script: |
-            ls -l
-            python3 -m venv venv
-            ls -l venv/bin  # Verify the venv directory structure
-            source venv/bin/activate
-            pip install -r requirements.txt
-      displayName: 'Install dependencies'
-
-    - task: ArchiveFiles@2
-      inputs:
-        rootFolderOrFile: '.'
-        includeRootFolder: false
-        archiveType: 'zip'
-        archiveFile: '$(Build.ArtifactStagingDirectory)/output.zip'
-        replaceExistingArchive: true
-      displayName: 'Archive files'
-
-- stage: Test
-  dependsOn: Build
-  jobs:
-  - job: TestJob
-    steps:
-    - script: |
-        source venv/bin/activate
-        pytest
-      displayName: 'Run tests'
+  vmImage: 'ubuntu-latest'  # Microsoft-hosted agent
+ 
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.x'  # Specify the Python version you want
+    addToPath: true
+ 
+- script: |
+    python -m pip install --upgrade pip
+    pip install -r requirements.txt
+  displayName: 'Install dependencies'
+ 
+- script: |
+    python -m unittest discover
+  displayName: 'Run tests'
+ 
+# - task: AzureWebApp@1
+#   inputs:
+#     azureSubscription: 'MyAzureServiceConnection'  # The name of your Azure service connection
+#     appName: 'webappusecase5'  # Name of your Azure Web App
+#     package: '$(System.DefaultWorkingDirectory)/**/*.zip'  # Path to your deployment package
+#     deploymentMethod: 'zipDeploy'
+#   displayName: 'Deploy to Azure Web App'
 
 # - stage: Deploy
 #   dependsOn: Test
