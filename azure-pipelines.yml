@@ -20,9 +20,11 @@ stages:
       displayName: 'Use Python 3.9'
 
     - script: |
-        python3 -m venv venv
-        source venv/bin/activate
-        pip install -r requirements.txt
+            ls -l
+            python3 -m venv venv
+            ls -l venv/bin  # Verify the venv directory structure
+            source venv/bin/activate
+            pip install -r requirements.txt
       displayName: 'Install dependencies'
 
     - task: ArchiveFiles@2
